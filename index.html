@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Investment | Invest Smarter</title>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+        
+        :root { --primary-blue: #007BFF; }
+        
+        .logo-font { font-family: 'Space Grotesk', sans-serif; }
+        
+        .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-hover:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgb(0 123 255 / 0.25); }
+        
+        .bounce-in { animation: bounceIn 0.8s ease forwards; }
+        @keyframes bounceIn {
+            from { opacity: 0; transform: scale(0.95) translateY(30px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        
+        .tab-active { background-color: #eff6ff; color: #007BFF; font-weight: 600; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
+    <!-- NAVBAR -->
+    <nav class="bg-white dark:bg-slate-900 border-b sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-x-3">
+                <div class="w-10 h-10 bg-[#007BFF] rounded-2xl flex items-center justify-center text-white text-3xl font-bold logo-font">A</div>
+                <span class="logo-font text-3xl font-semibold tracking-tighter text-[#007BFF]">Active</span>
+                <span class="logo-font text-3xl font-semibold tracking-tighter">Investment</span>
+            </div>
+            
+            <div id="nav-right" class="flex items-center gap-x-6"></div>
+        </div>
+    </nav>
+
+    <div id="main-app" class="max-w-7xl mx-auto px-6 py-8"></div>
+
+    <!-- TOAST -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[9999] space-y-3"></div>
+
+    <!-- LOGIN MODAL -->
+    <div id="login-modal" class="hidden fixed inset-0 bg-black/70 z-[10000] flex items-center justify-center">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-10 max-w-md w-full mx-4">
+            <h2 class="text-3xl font-semibold mb-8">Log in</h2>
+            <input id="login-email" type="email" placeholder="Email" class="w-full px-6 py-5 rounded-3xl border dark:border-slate-700 mb-4">
+            <input id="login-password" type="password" placeholder="Password" class="w-full px-6 py-5 rounded-3xl border dark:border-slate-700 mb-8">
+            <button onclick="performLogin()" class="w-full py-5 bg-[#007BFF] text-white font-semibold rounded-3xl">Log In</button>
+            <p class="text-center mt-6 text-sm text-slate-500">Demo: Use any email/password or create new account</p>
+            <p onclick="switchToSignup()" class="text-center text-blue-600 cursor-pointer mt-4">Need an account? Sign up</p>
+        </div>
+    </div>
+
+    <!-- SIGNUP MODAL -->
+    <div id="signup-modal" class="hidden fixed inset-0 bg-black/70 z-[10000] flex items-center justify-center">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-10 max-w-md w-full mx-4">
+            <h2 class="text-3xl font-semibold mb-8">Create Account</h2>
+            <input id="signup-name" type="text" placeholder="Full Name" class="w-full px-6 py-5 rounded-3xl border dark:border-slate-700 mb-4">
+            <input id="signup-email" type="email" placeholder="Email" class="w-full px-6 py-5 rounded-3xl border dark:border-slate-700 mb-4">
+            <input id="signup-password" type="password" placeholder="Password (min 6 chars)" class="w-full px-6 py-5 rounded-3xl border dark:border-slate-700 mb-6">
+            
+            <label class="block text-sm mb-2">Preferred Currency</label>
+            <select id="signup-currency" class="w-full px-6 py-5 rounded-3xl border dark:border-slate-700 mb-8">
+                <option value="USD">$ USD</option>
+                <option value="EUR">€ EUR</option>
+                <option value="GBP">£ GBP</option>
+                <option value="CAD">$ CAD</option>
+                <option value="AUD">$ AUD</option>
+            </select>
+            
+            <button onclick="performSignup()" class="w-full py-5 bg-[#007BFF] text-white font-semibold rounded-3xl">Create Account</button>
+            <p onclick="switchToLogin()" class="text-center text-blue-600 cursor-pointer mt-4">Already have account? Log in</p>
+        </div>
+    </div>
+
+    <!-- LIVE CHAT MODAL -->
+    <div id="chat-modal" class="hidden fixed inset-0 bg-black/70 z-[10001] flex items-end lg:items-center justify-center">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-3xl lg:rounded-3xl max-h-[85vh] flex flex-col">
+            <div class="p-6 border-b flex justify-between items-center">
+                <div class="flex items-center gap-x-3">
+                    <div class="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-white text-2xl">👨‍💼</div>
+                    <div>
+                        <p class="font-semibold">Live Support</p>
+                        <p class="text-xs text-emerald-600">Admin is online</p>
+                    </div>
+                </div>
+                <i onclick="hideChatModal()" class="fa-solid fa-xmark text-3xl cursor-pointer"></i>
+            </div>
+            <div id="chat-body" class="flex-1 p-6 overflow-y-auto space-y-4"></div>
+            <div class="p-4 border-t flex gap-3">
+                <input id="chat-input" onkeypress="if(event.key==='Enter') sendChatMessage()" placeholder="Type message..." class="flex-1 px-6 py-4 rounded-3xl border dark:border-slate-700 focus:outline-none">
+                <button onclick="sendChatMessage()" class="px-8 bg-[#007BFF] text-white rounded-3xl"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ==================== 🔥 REPLACE THIS WITH YOUR FIREBASE CONFIG ====================
+const firebaseConfig = {
+  apiKey: "AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  authDomain: "your-project-id.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project-id.appspot.com",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:xxxxxxxxxxxxxxxxxxxxxxxx"
+};
+// =================================================================================
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUserData = null;
+let currentTab = 0;
+let isDarkMode = false;
+let chatListener = null;
+
+// Show toast
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `flex items-center gap-x-3 px-6 py-4 rounded-3xl shadow-2xl text-white ${type === 'success' ? 'bg-emerald-600' : 'bg-red-600'} toast`;
+    toast.innerHTML = `
+        <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-triangle-exclamation'}"></i>
+        <span class="font-medium">${message}</span>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4500);
+}
+
+// Toggle dark mode
+function toggleDarkMode() {
+    isDarkMode = !isDarkMode;
+    document.documentElement.classList.toggle('dark', isDarkMode);
+}
+
+// Render navigation when logged in / out
+function renderNav() {
+    const nav = document.getElementById('nav-right');
+    if (!currentUserData) {
+        nav.innerHTML = `
+            <button onclick="toggleDarkMode()" class="px-4 py-2"><i class="fa-solid fa-moon text-xl"></i></button>
+            <button onclick="showLoginModal()" class="px-6 py-2.5 font-medium border border-slate-300 dark:border-slate-700 rounded-3xl">Log in</button>
+            <button onclick="showSignupModal()" class="px-6 py-2.5 bg-[#007BFF] text-white font-medium rounded-3xl">Sign up</button>
+        `;
+    } else {
+        nav.innerHTML = `
+            <button onclick="toggleDarkMode()" class="px-4 py-2"><i class="fa-solid fa-moon text-xl"></i></button>
+            <div class="flex items-center gap-x-3 cursor-pointer" onclick="renderDashboard()">
+                <div class="w-9 h-9 bg-[#007BFF] text-white rounded-2xl flex items-center justify-center font-bold">${currentUserData.name ? currentUserData.name[0].toUpperCase() : 'U'}</div>
+                <div>
+                    <p class="text-sm font-semibold">${currentUserData.name || 'User'}</p>
+                    <p class="text-xs text-slate-500">${currentUserData.currency || 'USD'} ${currentUserData.walletBalance || 0}</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="ml-4 text-red-600"><i class="fa-solid fa-right-from-bracket"></i></button>
+        `;
+    }
+}
+
+// Main render
+function renderApp() {
+    renderNav();
+    const main = document.getElementById('main-app');
+    
+    if (!currentUserData) {
+        main.innerHTML = `
+            <div class="hero-bg bg-gradient-to-br from-blue-700 to-indigo-700 text-white py-32 rounded-3xl text-center">
+                <h1 class="text-7xl font-semibold logo-font tracking-tighter">Invest Smarter</h1>
+                <p class="text-3xl mt-6 max-w-2xl mx-auto">A Digital Asset Investment Platform Built on Compliance, Security, and Strategic Growth.</p>
+                <div class="mt-12 flex justify-center gap-6">
+                    <button onclick="showSignupModal()" class="px-10 py-6 bg-white text-blue-700 font-semibold rounded-3xl text-xl">Start Investing Now</button>
+                </div>
+            </div>
+            <div class="mt-20 text-center">
+                <p class="uppercase text-xs tracking-widest text-slate-500">Trusted by investors worldwide</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Dashboard layout
+    main.innerHTML = `
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Sidebar -->
+            <div class="lg:w-72 bg-white dark:bg-slate-900 rounded-3xl p-6 shadow">
+                <div class="logo-font text-3xl font-semibold text-[#007BFF] mb-10">Active Investment</div>
+                <div class="space-y-2">
+                    <div onclick="switchTab(0)" class="sidebar-tab flex items-center gap-3 px-6 py-4 rounded-3xl cursor-pointer ${currentTab === 0 ? 'tab-active' : ''}"><i class="fa-solid fa-gauge-high"></i> Dashboard</div>
+                    <div onclick="switchTab(1)" class="sidebar-tab flex items-center gap-3 px-6 py-4 rounded-3xl cursor-pointer ${currentTab === 1 ? 'tab-active' : ''}"><i class="fa-solid fa-hand-holding-dollar"></i> Invest</div>
+                    <div onclick="switchTab(2)" class="sidebar-tab flex items-center gap-3 px-6 py-4 rounded-3xl cursor-pointer ${currentTab === 2 ? 'tab-active' : ''}"><i class="fa-solid fa-wallet"></i> Fund Wallet</div>
+                    <div onclick="switchTab(3)" class="sidebar-tab flex items-center gap-3 px-6 py-4 rounded-3xl cursor-pointer ${currentTab === 3 ? 'tab-active' : ''}"><i class="fa-solid fa-money-bill-transfer"></i> Withdraw</div>
+                    <div onclick="switchTab(4)" class="sidebar-tab flex items-center gap-3 px-6 py-4 rounded-3xl cursor-pointer ${currentTab === 4 ? 'tab-active' : ''}"><i class="fa-solid fa-briefcase"></i> Portfolio</div>
+                    <div onclick="switchTab(5)" class="sidebar-tab flex items-center gap-3 px-6 py-4 rounded-3xl cursor-pointer ${currentTab === 5 ? 'tab-active' : ''}"><i class="fa-solid fa-gear"></i> Settings</div>
+                    ${currentUserData.role === 'admin' ? `
+                    <div onclick="switchTab(6)" class="sidebar-tab flex items-center gap-3 px-6 py-4 rounded-3xl cursor-pointer text-amber-600 ${currentTab === 6 ? 'tab-active' : ''}"><i class="fa-solid fa-user-shield"></i> Admin Panel</div>` : ''}
+                </div>
+                
+                <div class="mt-auto pt-12">
+                    <p class="uppercase text-xs text-slate-400 mb-4">Customer Care</p>
+                    <a href="https://t.me/mymanagementteam09" target="_blank" class="block py-3 px-4 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-3xl flex items-center gap-3"><i class="fa-brands fa-telegram text-blue-500"></i> Telegram</a>
+                    <a href="https://wa.me/15484772197" target="_blank" class="block py-3 px-4 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-3xl flex items-center gap-3"><i class="fa-brands fa-whatsapp text-green-500"></i> WhatsApp</a>
+                    <button onclick="openChatModal()" class="mt-6 w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-3xl font-medium">Live Chat</button>
+                </div>
+            </div>
+            
+            <!-- Content Area -->
+            <div id="content-area" class="flex-1"></div>
+        </div>
+    `;
+    
+    switchTab(0);
+}
+
+// Tab content renderer
+async function switchTab(tab) {
+    currentTab = tab;
+    const area = document.getElementById('content-area');
+    
+    // Refresh active tab styles
+    document.querySelectorAll('.sidebar-tab').forEach(el => el.classList.remove('tab-active'));
+    const tabs = document.querySelectorAll('.sidebar-tab');
+    if (tabs[tab]) tabs[tab].classList.add('tab-active');
+    
+    if (tab === 0) { // Dashboard
+        area.innerHTML = `
+            <div>
+                <h1 class="text-4xl font-semibold">Welcome back, ${currentUserData.name || 'Investor'}!</h1>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+                    <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl card-hover">
+                        <p class="text-slate-500">Wallet Balance</p>
+                        <p class="text-5xl font-semibold mt-4">${currentUserData.currency || 'USD'} ${currentUserData.walletBalance || 0}</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl card-hover">
+                        <p class="text-slate-500">Investment Balance</p>
+                        <p class="text-5xl font-semibold mt-4">${currentUserData.currency || 'USD'} ${currentUserData.investmentBalance || 0}</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl card-hover">
+                        <p class="text-slate-500">Total Profit</p>
+                        <p class="text-5xl font-semibold mt-4 text-emerald-600">+$${Math.round((currentUserData.investmentBalance || 0) * 0.35)}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-12 bg-amber-100 dark:bg-amber-900 border border-amber-300 dark:border-amber-700 p-8 rounded-3xl">
+                    <p class="font-semibold">Admin Message</p>
+                    <p id="warning-msg" class="mt-3">TAKE NOTE: YOU HAVE A 35% PROFIT AFTER THIS INVESTMENT</p>
+                </div>
+            </div>
+        `;
+    } 
+    
+    else if (tab === 1) { // Invest
+        area.innerHTML = `
+            <div class="max-w-lg">
+                <h2 class="text-3xl font-semibold mb-8">Make an Investment</h2>
+                <div class="bg-white dark:bg-slate-900 p-10 rounded-3xl">
+                    <input id="invest-amount" type="number" placeholder="Amount in ${currentUserData.currency || 'USD'}" class="w-full px-6 py-6 text-4xl font-semibold rounded-3xl border dark:border-slate-700 focus:outline-none">
+                    <button onclick="makeInvestment()" class="mt-10 w-full py-6 bg-[#007BFF] text-white font-semibold rounded-3xl text-lg">Invest Now</button>
+                </div>
+                <div class="mt-8 text-center text-sm text-slate-500">Or choose a plan below (click to quick invest)</div>
+            </div>
+        `;
+    } 
+    
+    else if (tab === 2) { // Fund Wallet
+        area.innerHTML = `
+            <div>
+                <h2 class="text-3xl font-semibold mb-8">Fund Your Wallet</h2>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl">
+                        <h3 class="font-medium">Cryptocurrency</h3>
+                        <p class="text-xs text-slate-500 mt-6">BTC, ETH, LTC, USDT addresses are managed by admin.</p>
+                        <button onclick="simulateDeposit(5000)" class="mt-10 w-full py-4 bg-emerald-600 text-white rounded-3xl">Simulate Deposit $5,000</button>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl">
+                        <h3 class="font-medium">Bank Transfer</h3>
+                        <p class="text-xs text-slate-500 mt-6">Manual approval required. Contact support after transfer.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    } 
+    
+    else if (tab === 3) { // Withdraw
+        area.innerHTML = `
+            <div class="max-w-md bg-white dark:bg-slate-900 p-10 rounded-3xl">
+                <h2 class="text-3xl font-semibold mb-8">Withdraw Funds</h2>
+                <input id="withdraw-amount" type="number" placeholder="Amount" class="w-full px-6 py-6 text-4xl font-semibold rounded-3xl border dark:border-slate-700 mb-8">
+                <select id="withdraw-method" class="w-full px-6 py-6 rounded-3xl border dark:border-slate-700 mb-10">
+                    <option>Bank Transfer</option>
+                    <option>Crypto Wallet</option>
+                    <option>PayPal</option>
+                </select>
+                <button onclick="submitWithdrawal()" class="w-full py-6 bg-red-600 text-white font-semibold rounded-3xl">Submit Request</button>
+            </div>
+        `;
+    } 
+    
+    else if (tab === 4) { // Portfolio
+        area.innerHTML = `
+            <div>
+                <h2 class="text-3xl font-semibold mb-8">Your Portfolio</h2>
+                <div class="bg-white dark:bg-slate-900 p-10 rounded-3xl">
+                    <p class="text-5xl font-semibold">$${currentUserData.investmentBalance || 0}</p>
+                    <p class="text-emerald-600 mt-2">+35% this month</p>
+                </div>
+            </div>
+        `;
+    } 
+    
+    else if (tab === 5) { // Settings
+        area.innerHTML = `
+            <div class="max-w-md">
+                <h2 class="text-3xl font-semibold mb-8">Account Settings</h2>
+                <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl space-y-8">
+                    <div>
+                        <label class="block text-sm mb-3">Currency</label>
+                        <select onchange="updateCurrency(this.value)" class="w-full px-6 py-5 rounded-3xl border">
+                            <option value="USD" ${currentUserData.currency === 'USD' ? 'selected' : ''}>USD</option>
+                            <option value="EUR" ${currentUserData.currency === 'EUR' ? 'selected' : ''}>EUR</option>
+                            <option value="GBP" ${currentUserData.currency === 'GBP' ? 'selected' : ''}>GBP</option>
+                        </select>
+                    </div>
+                    <button onclick="changePasswordPrompt()" class="w-full py-5 border rounded-3xl">Change Password</button>
+                </div>
+            </div>
+        `;
+    } 
+    
+    else if (tab === 6 && currentUserData.role === 'admin') { // Admin Panel
+        renderAdminPanel(area);
+    }
+}
+
+function makeInvestment() {
+    const amount = parseFloat(document.getElementById('invest-amount').value);
+    if (!amount || amount < 100) {
+        showToast('Minimum investment is $100', 'error');
+        return;
+    }
+    if (amount > (currentUserData.walletBalance || 0)) {
+        showToast('Insufficient wallet balance', 'error');
+        return;
+    }
+    
+    db.collection('users').doc(auth.currentUser.uid).update({
+        walletBalance: firebase.firestore.FieldValue.increment(-amount),
+        investmentBalance: firebase.firestore.FieldValue.increment(amount)
+    }).then(() => {
+        currentUserData.walletBalance = (currentUserData.walletBalance || 0) - amount;
+        currentUserData.investmentBalance = (currentUserData.investmentBalance || 0) + amount;
+        showToast(`Investment of $${amount} successful!`);
+        switchTab(4);
+    });
+}
+
+function simulateDeposit(amount) {
+    db.collection('users').doc(auth.currentUser.uid).update({
+        walletBalance: firebase.firestore.FieldValue.increment(amount)
+    }).then(() => {
+        currentUserData.walletBalance = (currentUserData.walletBalance || 0) + amount;
+        showToast(`$${amount} added to wallet (demo)`);
+        switchTab(0);
+    });
+}
+
+function submitWithdrawal() {
+    const amount = parseFloat(document.getElementById('withdraw-amount').value);
+    if (!amount) return showToast('Enter amount', 'error');
+    
+    db.collection('withdrawals').add({
+        userId: auth.currentUser.uid,
+        userName: currentUserData.name,
+        amount: amount,
+        currency: currentUserData.currency || 'USD',
+        method: document.getElementById('withdraw-method').value,
+        status: 'pending',
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        showToast('Withdrawal request sent to admin!');
+    });
+}
+
+function updateCurrency(newCurrency) {
+    db.collection('users').doc(auth.currentUser.uid).update({ currency: newCurrency }).then(() => {
+        currentUserData.currency = newCurrency;
+        showToast(`Currency changed to ${newCurrency}`);
+    });
+}
+
+function changePasswordPrompt() {
+    showToast('Password reset email would be sent in production');
+}
+
+// Admin Panel
+function renderAdminPanel(area) {
+    area.innerHTML = `
+        <h2 class="text-3xl font-semibold mb-8">Admin Panel</h2>
+        <div class="grid grid-cols-2 gap-8">
+            <div>
+                <h3 class="font-medium mb-4">Users</h3>
+                <div id="admin-users" class="space-y-4"></div>
+            </div>
+            <div>
+                <h3 class="font-medium mb-4">Pending Withdrawals</h3>
+                <div id="admin-withdrawals" class="space-y-4"></div>
+            </div>
+        </div>
+    `;
+    loadAdminUsers();
+    loadAdminWithdrawals();
+}
+
+async function loadAdminUsers() {
+    const snap = await db.collection('users').get();
+    let html = '';
+    snap.forEach(doc => {
+        const u = doc.data();
+        html += `
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl flex justify-between">
+                <div>
+                    <p>${u.name || 'Unknown'}</p>
+                    <p class="text-xs text-slate-500">${u.email}</p>
+                </div>
+                <div class="text-right">
+                    <input type="number" value="${u.walletBalance || 0}" onchange="adminUpdateBalance('${doc.id}', 'walletBalance', this.value)" class="w-28 text-right bg-transparent">
+                </div>
+            </div>
+        `;
+    });
+    document.getElementById('admin-users').innerHTML = html;
+}
+
+async function loadAdminWithdrawals() {
+    const snap = await db.collection('withdrawals').where('status', '==', 'pending').get();
+    let html = '';
+    snap.forEach(doc => {
+        const w = doc.data();
+        html += `
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl">
+                <p>${w.userName} - $${w.amount}</p>
+                <button onclick="approveWithdrawal('${doc.id}')" class="mt-4 px-6 py-2 bg-emerald-600 text-white text-sm rounded-3xl">Approve</button>
+            </div>
+        `;
+    });
+    document.getElementById('admin-withdrawals').innerHTML = html || '<p class="text-slate-400">No pending withdrawals</p>';
+}
+
+function adminUpdateBalance(uid, field, value) {
+    db.collection('users').doc(uid).update({ [field]: parseFloat(value) || 0 });
+    showToast('Balance updated');
+}
+
+async function approveWithdrawal(id) {
+    await db.collection('withdrawals').doc(id).update({ status: 'approved' });
+    showToast('Withdrawal approved');
+    loadAdminWithdrawals();
+}
+
+// Live Chat
+function openChatModal() {
+    document.getElementById('chat-modal').classList.remove('hidden');
+    document.getElementById('chat-modal').classList.add('flex');
+    loadChatMessages();
+    
+    // Real-time listener
+    if (chatListener) chatListener();
+    chatListener = db.collection('chatMessages')
+        .orderBy('timestamp')
+        .onSnapshot(snapshot => {
+            renderChatMessages(snapshot);
+        });
+}
+
+function hideChatModal() {
+    document.getElementById('chat-modal').classList.add('hidden');
+    document.getElementById('chat-modal').classList.remove('flex');
+    if (chatListener) chatListener();
+}
+
+function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+    
+    db.collection('chatMessages').add({
+        userId: auth.currentUser.uid,
+        userName: currentUserData.name || 'User',
+        message: text,
+        from: currentUserData.role === 'admin' ? 'admin' : 'user',
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    input.value = '';
+}
+
+function renderChatMessages(snapshot) {
+    const body = document.getElementById('chat-body');
+    let html = '';
+    snapshot.forEach(doc => {
+        const m = doc.data();
+        const isMe = m.userId === auth.currentUser.uid;
+        html += `
+            <div class="${isMe ? 'text-right' : ''}">
+                <div class="inline-block max-w-[80%] px-5 py-3 rounded-3xl ${isMe ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-700'}">
+                    ${m.message}
+                </div>
+            </div>
+        `;
+    });
+    body.innerHTML = html;
+    body.scrollTop = body.scrollHeight;
+}
+
+function loadChatMessages() {
+    // Initial load handled by listener
+}
+
+// Auth functions
+function showLoginModal() {
+    document.getElementById('login-modal').classList.remove('hidden');
+    document.getElementById('login-modal').classList.add('flex');
+}
+
+function showSignupModal() {
+    document.getElementById('signup-modal').classList.remove('hidden');
+    document.getElementById('signup-modal').classList.add('flex');
+}
+
+function switchToSignup() {
+    document.getElementById('login-modal').classList.add('hidden');
+    showSignupModal();
+}
+
+function switchToLogin() {
+    document.getElementById('signup-modal').classList.add('hidden');
+    showLoginModal();
+}
+
+async function performLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    
+    try {
+        const cred = await auth.signInWithEmailAndPassword(email, password);
+        await loadCurrentUser(cred.user);
+        document.getElementById('login-modal').classList.add('hidden');
+        showToast('Logged in successfully');
+    } catch (e) {
+        showToast(e.message, 'error');
+    }
+}
+
+async function performSignup() {
+    const name = document.getElementById('signup-name').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const currency = document.getElementById('signup-currency').value;
+    
+    if (!name || !email || password.length < 6) {
+        showToast('Please fill fields correctly', 'error');
+        return;
+    }
+    
+    try {
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        await db.collection('users').doc(cred.user.uid).set({
+            name: name,
+            email: email,
+            currency: currency,
+            walletBalance: 0,
+            investmentBalance: 0,
+            role: email.includes('admin') ? 'admin' : 'user',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await loadCurrentUser(cred.user);
+        document.getElementById('signup-modal').classList.add('hidden');
+        showToast('Account created!');
+    } catch (e) {
+        showToast(e.message, 'error');
+    }
+}
+
+async function loadCurrentUser(user) {
+    const doc = await db.collection('users').doc(user.uid).get();
+    if (doc.exists) {
+        currentUserData = doc.data();
+        renderApp();
+    }
+}
+
+function logout() {
+    auth.signOut().then(() => {
+        currentUserData = null;
+        renderApp();
+        showToast('Logged out');
+    });
+}
+
+// Real-time auth listener
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        await loadCurrentUser(user);
+    } else {
+        currentUserData = null;
+        renderApp();
+    }
+});
+
+// Start the app
+window.onload = () => {
+    console.log('%c✅ Active Investment Firebase Version Loaded', 'color:#007BFF; font-size:16px; font-weight:600');
+    renderApp();
+    
+    // For testing: create a default admin if needed (run once)
+    // You can manually add in Firestore console: role = "admin"
+};
+</script>
+</body>
+</html>
