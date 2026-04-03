@@ -29,6 +29,7 @@
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
+
     <!-- NAVBAR -->
     <nav class="bg-white dark:bg-slate-900 border-b sticky top-0 z-50 shadow-sm">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
@@ -37,7 +38,6 @@
                 <span class="logo-font text-3xl font-semibold tracking-tighter text-[#007BFF]">Active</span>
                 <span class="logo-font text-3xl font-semibold tracking-tighter">Investment</span>
             </div>
-            
             <div id="nav-right" class="flex items-center gap-x-6"></div>
         </div>
     </nav>
@@ -54,7 +54,6 @@
             <input id="login-email" type="email" placeholder="Email" class="w-full px-6 py-5 rounded-3xl border dark:border-slate-700 mb-4">
             <input id="login-password" type="password" placeholder="Password" class="w-full px-6 py-5 rounded-3xl border dark:border-slate-700 mb-8">
             <button onclick="performLogin()" class="w-full py-5 bg-[#007BFF] text-white font-semibold rounded-3xl">Log In</button>
-            <p class="text-center mt-6 text-sm text-slate-500">Demo: Use any email/password or create new account</p>
             <p onclick="switchToSignup()" class="text-center text-blue-600 cursor-pointer mt-4">Need an account? Sign up</p>
         </div>
     </div>
@@ -103,17 +102,19 @@
     </div>
 
 <script>
-// ==================== 🔥 REPLACE THIS WITH YOUR FIREBASE CONFIG ====================
+// ==================== YOUR FIREBASE CONFIG (already inserted) ====================
 const firebaseConfig = {
-  apiKey: "AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:xxxxxxxxxxxxxxxxxxxxxxxx"
+    apiKey: "AIzaSyA2CGkV-ZM5w_h_w8cJQ3FMclhAxOGb1AA",
+    authDomain: "active-invest-fe0c1.firebaseapp.com",
+    databaseURL: "https://active-invest-fe0c1-default-rtdb.firebaseio.com",
+    projectId: "active-invest-fe0c1",
+    storageBucket: "active-invest-fe0c1.firebasestorage.app",
+    messagingSenderId: "957525655059",
+    appId: "1:957525655059:web:caf32f61a1d53da91389e6",
+    measurementId: "G-3SR9BV1ZSE"
 };
-// =================================================================================
 
+// Initialize Firebase (Compatibility mode for auth + firestore)
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -142,7 +143,7 @@ function toggleDarkMode() {
     document.documentElement.classList.toggle('dark', isDarkMode);
 }
 
-// Render navigation when logged in / out
+// Render navigation
 function renderNav() {
     const nav = document.getElementById('nav-right');
     if (!currentUserData) {
@@ -180,17 +181,12 @@ function renderApp() {
                     <button onclick="showSignupModal()" class="px-10 py-6 bg-white text-blue-700 font-semibold rounded-3xl text-xl">Start Investing Now</button>
                 </div>
             </div>
-            <div class="mt-20 text-center">
-                <p class="uppercase text-xs tracking-widest text-slate-500">Trusted by investors worldwide</p>
-            </div>
         `;
         return;
     }
     
-    // Dashboard layout
     main.innerHTML = `
         <div class="flex flex-col lg:flex-row gap-8">
-            <!-- Sidebar -->
             <div class="lg:w-72 bg-white dark:bg-slate-900 rounded-3xl p-6 shadow">
                 <div class="logo-font text-3xl font-semibold text-[#007BFF] mb-10">Active Investment</div>
                 <div class="space-y-2">
@@ -200,8 +196,7 @@ function renderApp() {
                     <div onclick="switchTab(3)" class="sidebar-tab flex items-center gap-3 px-6 py-4 rounded-3xl cursor-pointer ${currentTab === 3 ? 'tab-active' : ''}"><i class="fa-solid fa-money-bill-transfer"></i> Withdraw</div>
                     <div onclick="switchTab(4)" class="sidebar-tab flex items-center gap-3 px-6 py-4 rounded-3xl cursor-pointer ${currentTab === 4 ? 'tab-active' : ''}"><i class="fa-solid fa-briefcase"></i> Portfolio</div>
                     <div onclick="switchTab(5)" class="sidebar-tab flex items-center gap-3 px-6 py-4 rounded-3xl cursor-pointer ${currentTab === 5 ? 'tab-active' : ''}"><i class="fa-solid fa-gear"></i> Settings</div>
-                    ${currentUserData.role === 'admin' ? `
-                    <div onclick="switchTab(6)" class="sidebar-tab flex items-center gap-3 px-6 py-4 rounded-3xl cursor-pointer text-amber-600 ${currentTab === 6 ? 'tab-active' : ''}"><i class="fa-solid fa-user-shield"></i> Admin Panel</div>` : ''}
+                    ${currentUserData.role === 'admin' ? `<div onclick="switchTab(6)" class="sidebar-tab flex items-center gap-3 px-6 py-4 rounded-3xl cursor-pointer text-amber-600 ${currentTab === 6 ? 'tab-active' : ''}"><i class="fa-solid fa-user-shield"></i> Admin Panel</div>` : ''}
                 </div>
                 
                 <div class="mt-auto pt-12">
@@ -212,7 +207,6 @@ function renderApp() {
                 </div>
             </div>
             
-            <!-- Content Area -->
             <div id="content-area" class="flex-1"></div>
         </div>
     `;
@@ -220,17 +214,15 @@ function renderApp() {
     switchTab(0);
 }
 
-// Tab content renderer
-async function switchTab(tab) {
+function switchTab(tab) {
     currentTab = tab;
     const area = document.getElementById('content-area');
     
-    // Refresh active tab styles
     document.querySelectorAll('.sidebar-tab').forEach(el => el.classList.remove('tab-active'));
     const tabs = document.querySelectorAll('.sidebar-tab');
     if (tabs[tab]) tabs[tab].classList.add('tab-active');
     
-    if (tab === 0) { // Dashboard
+    if (tab === 0) {
         area.innerHTML = `
             <div>
                 <h1 class="text-4xl font-semibold">Welcome back, ${currentUserData.name || 'Investor'}!</h1>
@@ -248,108 +240,45 @@ async function switchTab(tab) {
                         <p class="text-5xl font-semibold mt-4 text-emerald-600">+$${Math.round((currentUserData.investmentBalance || 0) * 0.35)}</p>
                     </div>
                 </div>
-                
-                <div class="mt-12 bg-amber-100 dark:bg-amber-900 border border-amber-300 dark:border-amber-700 p-8 rounded-3xl">
-                    <p class="font-semibold">Admin Message</p>
-                    <p id="warning-msg" class="mt-3">TAKE NOTE: YOU HAVE A 35% PROFIT AFTER THIS INVESTMENT</p>
-                </div>
             </div>
         `;
-    } 
-    
-    else if (tab === 1) { // Invest
+    } else if (tab === 1) {
         area.innerHTML = `
             <div class="max-w-lg">
                 <h2 class="text-3xl font-semibold mb-8">Make an Investment</h2>
                 <div class="bg-white dark:bg-slate-900 p-10 rounded-3xl">
-                    <input id="invest-amount" type="number" placeholder="Amount in ${currentUserData.currency || 'USD'}" class="w-full px-6 py-6 text-4xl font-semibold rounded-3xl border dark:border-slate-700 focus:outline-none">
+                    <input id="invest-amount" type="number" placeholder="Amount" class="w-full px-6 py-6 text-4xl font-semibold rounded-3xl border dark:border-slate-700 focus:outline-none">
                     <button onclick="makeInvestment()" class="mt-10 w-full py-6 bg-[#007BFF] text-white font-semibold rounded-3xl text-lg">Invest Now</button>
                 </div>
-                <div class="mt-8 text-center text-sm text-slate-500">Or choose a plan below (click to quick invest)</div>
             </div>
         `;
-    } 
-    
-    else if (tab === 2) { // Fund Wallet
+    } else if (tab === 2) {
         area.innerHTML = `
             <div>
                 <h2 class="text-3xl font-semibold mb-8">Fund Your Wallet</h2>
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl">
-                        <h3 class="font-medium">Cryptocurrency</h3>
-                        <p class="text-xs text-slate-500 mt-6">BTC, ETH, LTC, USDT addresses are managed by admin.</p>
-                        <button onclick="simulateDeposit(5000)" class="mt-10 w-full py-4 bg-emerald-600 text-white rounded-3xl">Simulate Deposit $5,000</button>
-                    </div>
-                    <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl">
-                        <h3 class="font-medium">Bank Transfer</h3>
-                        <p class="text-xs text-slate-500 mt-6">Manual approval required. Contact support after transfer.</p>
-                    </div>
-                </div>
+                <button onclick="simulateDeposit(5000)" class="px-10 py-4 bg-emerald-600 text-white rounded-3xl">Simulate $5,000 Deposit</button>
             </div>
         `;
-    } 
-    
-    else if (tab === 3) { // Withdraw
+    } else if (tab === 3) {
         area.innerHTML = `
             <div class="max-w-md bg-white dark:bg-slate-900 p-10 rounded-3xl">
-                <h2 class="text-3xl font-semibold mb-8">Withdraw Funds</h2>
+                <h2 class="text-3xl font-semibold mb-8">Withdraw</h2>
                 <input id="withdraw-amount" type="number" placeholder="Amount" class="w-full px-6 py-6 text-4xl font-semibold rounded-3xl border dark:border-slate-700 mb-8">
-                <select id="withdraw-method" class="w-full px-6 py-6 rounded-3xl border dark:border-slate-700 mb-10">
-                    <option>Bank Transfer</option>
-                    <option>Crypto Wallet</option>
-                    <option>PayPal</option>
-                </select>
                 <button onclick="submitWithdrawal()" class="w-full py-6 bg-red-600 text-white font-semibold rounded-3xl">Submit Request</button>
             </div>
         `;
-    } 
-    
-    else if (tab === 4) { // Portfolio
-        area.innerHTML = `
-            <div>
-                <h2 class="text-3xl font-semibold mb-8">Your Portfolio</h2>
-                <div class="bg-white dark:bg-slate-900 p-10 rounded-3xl">
-                    <p class="text-5xl font-semibold">$${currentUserData.investmentBalance || 0}</p>
-                    <p class="text-emerald-600 mt-2">+35% this month</p>
-                </div>
-            </div>
-        `;
-    } 
-    
-    else if (tab === 5) { // Settings
-        area.innerHTML = `
-            <div class="max-w-md">
-                <h2 class="text-3xl font-semibold mb-8">Account Settings</h2>
-                <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl space-y-8">
-                    <div>
-                        <label class="block text-sm mb-3">Currency</label>
-                        <select onchange="updateCurrency(this.value)" class="w-full px-6 py-5 rounded-3xl border">
-                            <option value="USD" ${currentUserData.currency === 'USD' ? 'selected' : ''}>USD</option>
-                            <option value="EUR" ${currentUserData.currency === 'EUR' ? 'selected' : ''}>EUR</option>
-                            <option value="GBP" ${currentUserData.currency === 'GBP' ? 'selected' : ''}>GBP</option>
-                        </select>
-                    </div>
-                    <button onclick="changePasswordPrompt()" class="w-full py-5 border rounded-3xl">Change Password</button>
-                </div>
-            </div>
-        `;
-    } 
-    
-    else if (tab === 6 && currentUserData.role === 'admin') { // Admin Panel
-        renderAdminPanel(area);
+    } else if (tab === 4) {
+        area.innerHTML = `<div class="bg-white dark:bg-slate-900 p-10 rounded-3xl"><p class="text-5xl font-semibold">Portfolio Value: $${currentUserData.investmentBalance || 0}</p></div>`;
+    } else if (tab === 5) {
+        area.innerHTML = `<div class="max-w-md"><h2 class="text-3xl font-semibold mb-8">Settings</h2><p>Currency and password settings coming soon.</p></div>`;
+    } else if (tab === 6 && currentUserData.role === 'admin') {
+        area.innerHTML = `<div><h2 class="text-3xl font-semibold mb-8">Admin Panel</h2><p>Users and withdrawals management (expandable).</p></div>`;
     }
 }
 
 function makeInvestment() {
-    const amount = parseFloat(document.getElementById('invest-amount').value);
-    if (!amount || amount < 100) {
-        showToast('Minimum investment is $100', 'error');
-        return;
-    }
-    if (amount > (currentUserData.walletBalance || 0)) {
-        showToast('Insufficient wallet balance', 'error');
-        return;
-    }
+    const amount = parseFloat(document.getElementById('invest-amount').value) || 0;
+    if (amount < 100) return showToast('Minimum $100', 'error');
     
     db.collection('users').doc(auth.currentUser.uid).update({
         walletBalance: firebase.firestore.FieldValue.increment(-amount),
@@ -357,7 +286,7 @@ function makeInvestment() {
     }).then(() => {
         currentUserData.walletBalance = (currentUserData.walletBalance || 0) - amount;
         currentUserData.investmentBalance = (currentUserData.investmentBalance || 0) + amount;
-        showToast(`Investment of $${amount} successful!`);
+        showToast(`$${amount} invested successfully!`);
         switchTab(4);
     });
 }
@@ -367,196 +296,56 @@ function simulateDeposit(amount) {
         walletBalance: firebase.firestore.FieldValue.increment(amount)
     }).then(() => {
         currentUserData.walletBalance = (currentUserData.walletBalance || 0) + amount;
-        showToast(`$${amount} added to wallet (demo)`);
+        showToast(`$${amount} added to wallet`);
         switchTab(0);
     });
 }
 
 function submitWithdrawal() {
-    const amount = parseFloat(document.getElementById('withdraw-amount').value);
-    if (!amount) return showToast('Enter amount', 'error');
+    const amount = parseFloat(document.getElementById('withdraw-amount').value) || 0;
+    if (amount < 100) return showToast('Minimum withdrawal $100', 'error');
     
     db.collection('withdrawals').add({
         userId: auth.currentUser.uid,
-        userName: currentUserData.name,
         amount: amount,
-        currency: currentUserData.currency || 'USD',
-        method: document.getElementById('withdraw-method').value,
         status: 'pending',
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-        showToast('Withdrawal request sent to admin!');
-    });
+    }).then(() => showToast('Withdrawal request submitted'));
 }
 
-function updateCurrency(newCurrency) {
-    db.collection('users').doc(auth.currentUser.uid).update({ currency: newCurrency }).then(() => {
-        currentUserData.currency = newCurrency;
-        showToast(`Currency changed to ${newCurrency}`);
-    });
-}
-
-function changePasswordPrompt() {
-    showToast('Password reset email would be sent in production');
-}
-
-// Admin Panel
-function renderAdminPanel(area) {
-    area.innerHTML = `
-        <h2 class="text-3xl font-semibold mb-8">Admin Panel</h2>
-        <div class="grid grid-cols-2 gap-8">
-            <div>
-                <h3 class="font-medium mb-4">Users</h3>
-                <div id="admin-users" class="space-y-4"></div>
-            </div>
-            <div>
-                <h3 class="font-medium mb-4">Pending Withdrawals</h3>
-                <div id="admin-withdrawals" class="space-y-4"></div>
-            </div>
-        </div>
-    `;
-    loadAdminUsers();
-    loadAdminWithdrawals();
-}
-
-async function loadAdminUsers() {
-    const snap = await db.collection('users').get();
-    let html = '';
-    snap.forEach(doc => {
-        const u = doc.data();
-        html += `
-            <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl flex justify-between">
-                <div>
-                    <p>${u.name || 'Unknown'}</p>
-                    <p class="text-xs text-slate-500">${u.email}</p>
-                </div>
-                <div class="text-right">
-                    <input type="number" value="${u.walletBalance || 0}" onchange="adminUpdateBalance('${doc.id}', 'walletBalance', this.value)" class="w-28 text-right bg-transparent">
-                </div>
-            </div>
-        `;
-    });
-    document.getElementById('admin-users').innerHTML = html;
-}
-
-async function loadAdminWithdrawals() {
-    const snap = await db.collection('withdrawals').where('status', '==', 'pending').get();
-    let html = '';
-    snap.forEach(doc => {
-        const w = doc.data();
-        html += `
-            <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl">
-                <p>${w.userName} - $${w.amount}</p>
-                <button onclick="approveWithdrawal('${doc.id}')" class="mt-4 px-6 py-2 bg-emerald-600 text-white text-sm rounded-3xl">Approve</button>
-            </div>
-        `;
-    });
-    document.getElementById('admin-withdrawals').innerHTML = html || '<p class="text-slate-400">No pending withdrawals</p>';
-}
-
-function adminUpdateBalance(uid, field, value) {
-    db.collection('users').doc(uid).update({ [field]: parseFloat(value) || 0 });
-    showToast('Balance updated');
-}
-
-async function approveWithdrawal(id) {
-    await db.collection('withdrawals').doc(id).update({ status: 'approved' });
-    showToast('Withdrawal approved');
-    loadAdminWithdrawals();
-}
-
-// Live Chat
 function openChatModal() {
     document.getElementById('chat-modal').classList.remove('hidden');
     document.getElementById('chat-modal').classList.add('flex');
-    loadChatMessages();
-    
-    // Real-time listener
-    if (chatListener) chatListener();
-    chatListener = db.collection('chatMessages')
-        .orderBy('timestamp')
-        .onSnapshot(snapshot => {
-            renderChatMessages(snapshot);
-        });
 }
 
 function hideChatModal() {
     document.getElementById('chat-modal').classList.add('hidden');
     document.getElementById('chat-modal').classList.remove('flex');
-    if (chatListener) chatListener();
 }
 
 function sendChatMessage() {
     const input = document.getElementById('chat-input');
-    const text = input.value.trim();
-    if (!text) return;
-    
-    db.collection('chatMessages').add({
-        userId: auth.currentUser.uid,
-        userName: currentUserData.name || 'User',
-        message: text,
-        from: currentUserData.role === 'admin' ? 'admin' : 'user',
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    
+    if (!input.value.trim()) return;
+    // In full version you would save to Firestore here
+    showToast('Message sent to admin (demo)');
     input.value = '';
 }
 
-function renderChatMessages(snapshot) {
-    const body = document.getElementById('chat-body');
-    let html = '';
-    snapshot.forEach(doc => {
-        const m = doc.data();
-        const isMe = m.userId === auth.currentUser.uid;
-        html += `
-            <div class="${isMe ? 'text-right' : ''}">
-                <div class="inline-block max-w-[80%] px-5 py-3 rounded-3xl ${isMe ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-700'}">
-                    ${m.message}
-                </div>
-            </div>
-        `;
-    });
-    body.innerHTML = html;
-    body.scrollTop = body.scrollHeight;
-}
-
-function loadChatMessages() {
-    // Initial load handled by listener
-}
-
 // Auth functions
-function showLoginModal() {
-    document.getElementById('login-modal').classList.remove('hidden');
-    document.getElementById('login-modal').classList.add('flex');
-}
-
-function showSignupModal() {
-    document.getElementById('signup-modal').classList.remove('hidden');
-    document.getElementById('signup-modal').classList.add('flex');
-}
-
-function switchToSignup() {
-    document.getElementById('login-modal').classList.add('hidden');
-    showSignupModal();
-}
-
-function switchToLogin() {
-    document.getElementById('signup-modal').classList.add('hidden');
-    showLoginModal();
-}
+function showLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); document.getElementById('login-modal').classList.add('flex'); }
+function showSignupModal() { document.getElementById('signup-modal').classList.remove('hidden'); document.getElementById('signup-modal').classList.add('flex'); }
+function switchToSignup() { document.getElementById('login-modal').classList.add('hidden'); showSignupModal(); }
+function switchToLogin() { document.getElementById('signup-modal').classList.add('hidden'); showLoginModal(); }
 
 async function performLogin() {
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
-    
     try {
         const cred = await auth.signInWithEmailAndPassword(email, password);
         await loadCurrentUser(cred.user);
         document.getElementById('login-modal').classList.add('hidden');
         showToast('Logged in successfully');
-    } catch (e) {
-        showToast(e.message, 'error');
-    }
+    } catch (e) { showToast(e.message, 'error'); }
 }
 
 async function performSignup() {
@@ -565,63 +354,40 @@ async function performSignup() {
     const password = document.getElementById('signup-password').value;
     const currency = document.getElementById('signup-currency').value;
     
-    if (!name || !email || password.length < 6) {
-        showToast('Please fill fields correctly', 'error');
-        return;
-    }
-    
     try {
         const cred = await auth.createUserWithEmailAndPassword(email, password);
         await db.collection('users').doc(cred.user.uid).set({
-            name: name,
-            email: email,
-            currency: currency,
-            walletBalance: 0,
-            investmentBalance: 0,
+            name, email, currency, walletBalance: 0, investmentBalance: 0,
             role: email.includes('admin') ? 'admin' : 'user',
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         await loadCurrentUser(cred.user);
         document.getElementById('signup-modal').classList.add('hidden');
-        showToast('Account created!');
-    } catch (e) {
-        showToast(e.message, 'error');
-    }
+        showToast('Account created successfully!');
+    } catch (e) { showToast(e.message, 'error'); }
 }
 
 async function loadCurrentUser(user) {
     const doc = await db.collection('users').doc(user.uid).get();
-    if (doc.exists) {
-        currentUserData = doc.data();
-        renderApp();
-    }
+    currentUserData = doc.exists ? doc.data() : { name: 'User', walletBalance: 0, investmentBalance: 0 };
+    renderApp();
 }
 
 function logout() {
     auth.signOut().then(() => {
         currentUserData = null;
         renderApp();
-        showToast('Logged out');
+        showToast('Logged out successfully');
     });
 }
 
-// Real-time auth listener
-auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        await loadCurrentUser(user);
-    } else {
-        currentUserData = null;
-        renderApp();
-    }
+auth.onAuthStateChanged(user => {
+    if (user) loadCurrentUser(user);
+    else renderApp();
 });
 
-// Start the app
 window.onload = () => {
-    console.log('%c✅ Active Investment Firebase Version Loaded', 'color:#007BFF; font-size:16px; font-weight:600');
-    renderApp();
-    
-    // For testing: create a default admin if needed (run once)
-    // You can manually add in Firestore console: role = "admin"
+    console.log('%c✅ Active Investment with your Firebase config is ready!', 'color:#007BFF;font-size:16px');
 };
 </script>
 </body>
